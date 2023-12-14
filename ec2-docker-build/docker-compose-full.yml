@@ -1,0 +1,315 @@
+services:
+  db:
+    image: postgres:12.2-alpine
+    restart: unless-stopped
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+
+  redis:
+    image: redis:6.2.4-alpine
+    command: redis-server --requirepass 321654987
+    ports:
+      - 6379:6379
+
+  pgadmin:
+    image: dpage/pgadmin4:5.4
+    restart: unless-stopped
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    ports:
+      - 8000:80
+    environment:
+      - PGADMIN_DEFAULT_EMAIL
+      - PGADMIN_DEFAULT_PASSWORD
+      - PGADMIN_CONFIG_CONSOLE_LOG_LEVEL=50
+      - PGADMIN_CONFIG_FILE_LOG_LEVEL=50
+    links:
+      - db
+    depends_on:
+      - db
+
+  # pgbackups:
+  #   # chown -R 999:999 /var/opt/pgbackups
+  #   image: prodrigestivill/postgres-backup-local
+  #   restart: unless-stopped
+  #   user: postgres:postgres
+  #   volumes:
+  #     - ./pgbackups:/backups
+  #   environment:
+  #     - POSTGRES_HOST
+  #     - POSTGRES_DB
+  #     - POSTGRES_USER
+  #     - POSTGRES_PASSWORD
+  #     #  - POSTGRES_PASSWORD_FILE=/run/secrets/db_password <-- alternative for POSTGRES_PASSWORD (to use with docker secrets)
+  #     - POSTGRES_EXTRA_OPTS=-Z9 --schema=public --blobs
+  #     - SCHEDULE=@daily # @hourly # @every 0h1m00s
+  #     - BACKUP_KEEP_DAYS=7
+  #     - BACKUP_KEEP_WEEKS=4
+  #     - BACKUP_KEEP_MONTHS=6
+  #     - HEALTHCHECK_PORT=8888
+  #   links:
+  #     - db
+  #   depends_on:
+  #     - db
+
+  app:
+    image: golang:1.16.2-alpine3.13
+    restart: unless-stopped
+    volumes:
+      - ../backend-circle-app:/app
+    working_dir: /app
+    ports:
+      - 3001:3001
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://app:3001/v1/health/"]
+      interval: 120s
+      timeout: 20s
+      retries: 3
+    environment:
+      - HOST
+      - POSTGRES_HOST
+      - POSTGRES_PORT
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - MANDRILL
+      - SEGMENT
+      - JWTSECRET
+    command: >
+      sh -c "
+      apk update && apk upgrade && apk add --no-cache git curl tzdata &&
+      git config --global url."https://$GHUSERNAME:$GHTOKEN@github.com".insteadOf "https://github.com" &&
+      go run main.go sql.go
+      "
+    links:
+      - db
+    depends_on:
+      - db
+
+  app_messages:
+    image: golang:1.16.2-alpine3.13
+    restart: unless-stopped
+    volumes:
+      - ../backend-messages-circle-app:/app_messages
+    working_dir: /app_messages
+    ports:
+      - 8484:8484
+      - 8485:8485
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://app_messages:8484/v1/health/"]
+      interval: 120s
+      timeout: 20s
+      retries: 3
+    environment:
+      - HOST
+      - POSTGRES_HOST
+      - POSTGRES_PORT
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - FCMKEY
+      - SEGMENT
+      - JWTSECRET
+    command: >
+      sh -c "
+      apk update && apk upgrade && apk add --no-cache git curl &&
+      git config --global url."https://$GHUSERNAME:$GHTOKEN@github.com".insteadOf "https://github.com" &&
+      go run main.go
+      "
+    links:
+      - db
+      - app
+    depends_on:
+      - db
+      - app
+
+  app_notifications:
+    image: golang:1.16.2-alpine3.13
+    restart: unless-stopped
+    volumes:
+      - ../backend-notifications-circles-app:/app_notifications
+    working_dir: /app_notifications
+    ports:
+      - 8111:8111
+      - 811:811
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://app_notifications:8111/v1/health/"]
+      interval: 120s
+      timeout: 20s
+      retries: 3
+    environment:
+      - HOST
+      - POSTGRES_HOST
+      - POSTGRES_PORT
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - MANDRILL
+      - FCMKEY
+      - SEGMENT
+      - JWTSECRET
+    command: >
+      sh -c "
+      apk update && apk upgrade && apk add --no-cache git curl &&
+      git config --global url."https://$GHUSERNAME:$GHTOKEN@github.com".insteadOf "https://github.com" &&
+      go run main.go
+      "
+    links:
+      - app
+    depends_on:
+      - app
+
+  app_ticker:
+    image: golang:1.16.2-alpine3.13
+    restart: unless-stopped
+    volumes:
+      - ../backend-ticker-circles-app:/app_ticker
+    working_dir: /app_ticker
+    ports:
+      - 7134:7134
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://app_ticker:7134/v1/health/"]
+      interval: 120s
+      timeout: 20s
+      retries: 3
+    environment:
+      - HOST
+      - POSTGRES_HOST
+      - POSTGRES_PORT
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - AUTH
+    command: >
+      sh -c "
+      apk update && apk upgrade && apk add --no-cache git curl &&
+      git config --global url."https://$GHUSERNAME:$GHTOKEN@github.com".insteadOf "https://github.com" &&
+      go run main.go
+      "
+    links:
+      - app
+    depends_on:
+      - app
+
+  app_admin:
+    image: node:15.4.0-alpine3.12
+    restart: unless-stopped
+    volumes:
+      - ~/projects/socotree/frontend-admin-circle-app:/app_admin
+    working_dir: /app_admin
+    ports:
+      - 3000:3000
+    environment:
+      - REACT_APP_API_HOST
+      - REACT_APP_API_URL
+      - REACT_APP_API_PORT
+      - REACT_APP_API_PORT_MESSAGES
+    command: >
+      sh -c "
+      yarn install &&
+      yarn start
+      "
+    links:
+      - db
+      - app
+    depends_on:
+      - db
+      - app
+
+  twilio_token:
+    image: node:15.4.0-alpine3.12
+    restart: unless-stopped
+    volumes:
+      - ../../../../../projects/socotree/TwilioTokenVideo:/getTokenApi
+    working_dir: /getTokenApi
+    ports:
+      - 3811:3811
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://twilio_token:3811/v1/health/"]
+      interval: 120s
+      timeout: 20s
+      retries: 3
+    environment:
+      - TWILIOACCOUNTSID
+      - TWILIOAPIKEY
+      - TWILIOAPISECRET
+    command: >
+      sh -c "
+      apk update && apk upgrade && apk add --no-cache curl &&
+      yarn install &&
+      node getTokenApi.js
+      "
+    links:
+      - app
+    depends_on:
+      - app
+
+  matching_algo:
+    image: python:3.9.0-slim-buster
+    restart: unless-stopped
+    volumes:
+      - ~/projects/socotree/matching-algorithm:/matching
+    working_dir: /matching
+    ports:
+      - 5000:5000
+    environment:
+      - POSTGRES_HOST
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_PORT
+      - PYTHONUNBUFFERED=1
+    command: >
+      sh -c "
+      python3 -m pip install pip==21.0.1
+      && python3 -m pip install pandas
+      && python3 -m pip install psycopg2-binary
+      && python3 -m pip install sqlalchemy
+      && python3 -m pip install flask
+      && python3 -m pip install flask_cors
+      && python3 -m pip install waitress
+      && python3 -m pip install numpy
+      && python3 -m pip install networkx
+      && python3 main.py
+      "
+    links:
+      - db
+    depends_on:
+      - db
+
+  nginx:
+    image: nginx:1.19.0-alpine
+    restart: unless-stopped
+    volumes:
+      - ./nginx/nginx.conf.full:/etc/nginx/nginx.conf
+      - ./nginx:/etc/nginx/html
+    ports:
+      - 80:80
+    links:
+      - app
+      - app_messages
+      - app_notifications
+      - app_admin
+      - matching_algo
+      - twilio_token
+    depends_on:
+      - app
+      - app_messages
+      - app_notifications
+      - app_admin
+      - matching_algo
+      - twilio_token
+
+volumes:
+  postgres:
+  pgadmin:
+  nginx:
+  pgbackups:

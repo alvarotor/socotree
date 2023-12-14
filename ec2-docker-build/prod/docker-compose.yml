@@ -1,0 +1,213 @@
+services:
+  redis:
+    image: redis:6.2.4-alpine
+    command: redis-server --requirepass 321654987
+    ports:
+      - 6379:6379
+
+  pgbackups:
+    # chown -R 999:999 pgbackups
+    image: prodrigestivill/postgres-backup-local
+    restart: unless-stopped
+    user: postgres:postgres
+    volumes:
+      - ./pgbackups:/backups
+    environment:
+      - POSTGRES_HOST
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      #  - POSTGRES_PASSWORD_FILE=/run/secrets/db_password <-- alternative for POSTGRES_PASSWORD (to use with docker secrets)
+      - POSTGRES_EXTRA_OPTS=-Z9 --schema=public --blobs
+      - SCHEDULE=@daily # @hourly # @every 0h1m00s
+      - BACKUP_KEEP_DAYS=7
+      - BACKUP_KEEP_WEEKS=4
+      - BACKUP_KEEP_MONTHS=6
+      - HEALTHCHECK_PORT=8888
+    # links:
+    #   - db
+    # depends_on:
+    #   - db
+
+  app:
+    image: ghcr.io/socotree/backend-circle-app:latest
+    restart: unless-stopped
+    ports:
+      - 3001:3001
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://app:3001/v1/health/"]
+      interval: 120s
+      timeout: 20s
+      retries: 3
+    environment:
+      - HOST
+      - POSTGRES_HOST
+      - POSTGRES_PORT
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - MANDRILL
+      - SEGMENT
+      - JWTSECRET
+    # links:
+    #   - db
+    # depends_on:
+    #   - db
+
+  app_messages:
+    image: ghcr.io/socotree/backend-messages-circle-app:latest
+    restart: unless-stopped
+    ports:
+      - 8484:8484
+      - 8485:8485
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://app_messages:8484/v1/health/"]
+      interval: 120s
+      timeout: 20s
+      retries: 3
+    environment:
+      - HOST
+      - POSTGRES_HOST
+      - POSTGRES_PORT
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - FCMKEY
+      - SEGMENT
+      - JWTSECRET
+    links:
+      # - db
+      - app
+    depends_on:
+      # - db
+      - app
+
+  app_notifications:
+    image: ghcr.io/socotree/backend-notifications-circles-app:latest
+    restart: unless-stopped
+    ports:
+      - 8111:8111
+      - 811:811
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://app_notifications:8111/v1/health/"]
+      interval: 120s
+      timeout: 20s
+      retries: 3
+    environment:
+      - HOST
+      - POSTGRES_HOST
+      - POSTGRES_PORT
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - MANDRILL
+      - FCMKEY
+      - SEGMENT
+      - JWTSECRET
+    links:
+      - app
+    depends_on:
+      - app
+
+  app_ticker:
+    image: ghcr.io/socotree/backend-ticker-circles-app:latest
+    restart: unless-stopped
+    ports:
+      - 7134:7134
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://app_ticker:7134/v1/health/"]
+      interval: 120s
+      timeout: 20s
+      retries: 3
+    environment:
+      - HOST
+      - POSTGRES_HOST
+      - POSTGRES_PORT
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - AUTH
+    links:
+      - app
+    depends_on:
+      - app
+
+  matching_algo:
+    image: ghcr.io/socotree/matching-algorithm:latest
+    restart: unless-stopped
+    ports:
+      - 5000:5000
+    environment:
+      - POSTGRES_HOST
+      - POSTGRES_PORT
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - PYTHONUNBUFFERED=1
+    # links:
+    #   - db
+    # depends_on:
+    #   - db
+
+  twilio_token:
+    image: ghcr.io/socotree/twiliotokenvideo:latest
+    restart: unless-stopped
+    ports:
+      - 3811:3811
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://twilio_token:3811/v1/health/"]
+      interval: 120s
+      timeout: 20s
+      retries: 3
+    environment:
+      - TWILIOACCOUNTSID
+      - TWILIOAPIKEY
+      - TWILIOAPISECRET
+    links:
+      - app
+    depends_on:
+      - app
+
+  nginx:
+    image: nginx:1.19.0-alpine
+    restart: unless-stopped
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+      - /home/ec2-user/nginx.conf:/etc/nginx/nginx.conf
+      - /home/ec2-user/index.html:/etc/nginx/html/index.html
+    ports:
+      - 80:80
+      - 443:443
+    command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
+    links:
+      - app
+      - app_messages
+      - app_notifications
+      - matching_algo
+      - twilio_token
+    depends_on:
+      - app
+      - app_messages
+      - app_notifications
+      - matching_algo
+      - twilio_token
+
+  certbot:
+    image: certbot/certbot
+    restart: unless-stopped
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    links:
+      - nginx
+    depends_on:
+      - nginx
+
+volumes:
+  nginx:
+  certbot:
+  pgbackups:

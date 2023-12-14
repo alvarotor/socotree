@@ -1,0 +1,201 @@
+backend:
+  name: git-gateway
+  repo: socotree/circles.city
+  branch: master
+  commit_messages:
+    create: "Create {{collection}} “{{slug}}”"
+    update: "Update {{collection}} “{{slug}}”"
+    delete: "Delete {{collection}} “{{slug}}”"
+    uploadMedia: "Upload media “{{path}}”"
+    deleteMedia: "Delete media “{{path}}”"
+
+media_folder: static/images
+public_folder: /img
+
+collections:
+  - name: "pages"
+    label: "Pages"
+    files:
+      - file: "src/pages/index.md"
+        label: "Home Page"
+        name: "index"
+        fields:
+          - {
+              label: "Template Key",
+              name: "templateKey",
+              widget: "hidden",
+              default: "index-page",
+            }
+          - { label: "Heading", name: heading, widget: string }
+          - {
+              label: "How it works",
+              name: howitworks,
+              widget: object,
+              fields:
+                [
+                  { label: Title1, name: title1, widget: string },
+                  { label: Description1, name: description1, widget: text },
+                  { label: Title2, name: title2, widget: string },
+                  { label: Description2, name: description2, widget: text },
+                  { label: Title3, name: title3, widget: string },
+                  { label: Description3, name: description3, widget: text },
+                ],
+            }
+          - {
+              label: "FREQUENTLY ASKED QUESTIONS",
+              name: faq,
+              widget: list,
+              fields:
+                [
+                  { label: "Question", name: question, widget: string },
+                  { label: "Answer", name: answer, widget: text },
+                ],
+            }
+      - file: "src/pages/about/index.md"
+        label: "About"
+        name: "about"
+        fields:
+          - {
+              label: "Template Key",
+              name: "templateKey",
+              widget: "hidden",
+              default: "about-page",
+            }
+          - { label: "Title", name: "title", widget: "string" }
+          - { label: "Body", name: "body", widget: "markdown" }
+      - file: "src/pages/impressum/index.md"
+        label: "Impressum"
+        name: "impressum"
+        fields:
+          - {
+              label: "Template Key",
+              name: "templateKey",
+              widget: "hidden",
+              default: "impressum-page",
+            }
+          - { label: "Title", name: "title", widget: "string" }
+          - { label: "Body", name: "body", widget: "markdown" }
+      - file: "src/pages/datenschutzerklarung/index.md"
+        label: "Datenschutzerklärung"
+        name: "datenschutzerklarung"
+        fields:
+          - {
+              label: "Template Key",
+              name: "templateKey",
+              widget: "hidden",
+              default: "datenschutzerklarung-page",
+            }
+          - { label: "Title", name: "title", widget: "string" }
+          - { label: "Body", name: "body", widget: "markdown" }
+      - file: "src/pages/berlin/index.md"
+        label: "Berlin EN"
+        name: "berlin"
+        fields:
+          - {
+              label: "Template Key",
+              name: "templateKey",
+              widget: "hidden",
+              default: "berlin-page",
+            }
+          - { label: "Heading", name: heading, widget: string }
+          - { label: "Link Button", name: linkbutton, widget: string }
+          - {
+              label: "How it works",
+              name: howitworks,
+              widget: object,
+              fields:
+                [
+                  { label: Title1, name: title1, widget: string },
+                  { label: Description1, name: description1, widget: text },
+                  { label: Title2, name: title2, widget: string },
+                  { label: Description2, name: description2, widget: text },
+                  { label: Title3, name: title3, widget: string },
+                  { label: Description3, name: description3, widget: text },
+                ],
+            }
+          - {
+              label: "FREQUENTLY ASKED QUESTIONS",
+              name: faq,
+              widget: list,
+              fields:
+                [
+                  { label: "Question", name: question, widget: string },
+                  { label: "Answer", name: answer, widget: text },
+                ],
+            }
+      - file: "src/pages/berlin_de/index.md"
+        label: "Berlin DE"
+        name: "berlinde"
+        fields:
+          - {
+              label: "Template Key",
+              name: "templateKey",
+              widget: "hidden",
+              default: "berlinde-page",
+            }
+          - { label: "Heading", name: heading, widget: string }
+          - { label: "Link Button", name: linkbutton, widget: string }
+          - {
+              label: "How it works",
+              name: howitworks,
+              widget: object,
+              fields:
+                [
+                  { label: Title1, name: title1, widget: string },
+                  { label: Description1, name: description1, widget: text },
+                  { label: Title2, name: title2, widget: string },
+                  { label: Description2, name: description2, widget: text },
+                  { label: Title3, name: title3, widget: string },
+                  { label: Description3, name: description3, widget: text },
+                ],
+            }
+          - {
+              label: "FREQUENTLY ASKED QUESTIONS",
+              name: faq,
+              widget: list,
+              fields:
+                [
+                  { label: "Question", name: question, widget: string },
+                  { label: "Answer", name: answer, widget: text },
+                ],
+            }
+      - file: "src/pages/berlin/faq/index.md"
+        label: "Berlin EN FAQ"
+        name: "berlinfaq"
+        fields:
+          - {
+              label: "Template Key",
+              name: "templateKey",
+              widget: "hidden",
+              default: "berlinfaq-page",
+            }
+          - {
+              label: "FREQUENTLY ASKED QUESTIONS",
+              name: faq,
+              widget: list,
+              fields:
+                [
+                  { label: "Question", name: question, widget: string },
+                  { label: "Answer", name: answer, widget: text },
+                ],
+            }
+      - file: "src/pages/berlin_de/faq/index.md"
+        label: "Berlin DE FAQ"
+        name: "berlindefaq"
+        fields:
+          - {
+              label: "Template Key",
+              name: "templateKey",
+              widget: "hidden",
+              default: "berlindefaq-page",
+            }
+          - {
+              label: "FREQUENTLY ASKED QUESTIONS",
+              name: faq,
+              widget: list,
+              fields:
+                [
+                  { label: "Question", name: question, widget: string },
+                  { label: "Answer", name: answer, widget: text },
+                ],
+            }

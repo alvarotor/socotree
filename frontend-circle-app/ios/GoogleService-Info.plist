@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>683497120563-neuaa09cd7vn98ci0r7ifunepjjlppfe.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.683497120563-neuaa09cd7vn98ci0r7ifunepjjlppfe</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>683497120563-88tlgju36u3sbnjm701ugkfb6a1f5tb7.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyD8nir-1ivf6VAv7xGpQ7fjUfmO72ktzB8</string>
+	<key>GCM_SENDER_ID</key>
+	<string>683497120563</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>circles.app.dev</string>
+	<key>PROJECT_ID</key>
+	<string>dev-circle-app</string>
+	<key>STORAGE_BUCKET</key>
+	<string>dev-circle-app.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:683497120563:ios:bab76d5670174ed5761446</string>
+	<key>DATABASE_URL</key>
+	<string>https://dev-circle-app.firebaseio.com</string>
+</dict>
+</plist>

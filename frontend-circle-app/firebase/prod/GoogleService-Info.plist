@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>842757656787-0b2nojegtor0ejb0fhcm4tih0skfc02t.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.842757656787-0b2nojegtor0ejb0fhcm4tih0skfc02t</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>842757656787-94q9s1lpvg2t3vimhhbgafd512uk4gtb.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyATXeWlsakg-EUWqCl1WkKRxjsuohZEWWw</string>
+	<key>GCM_SENDER_ID</key>
+	<string>842757656787</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>circles.meet.people.make.friends</string>
+	<key>PROJECT_ID</key>
+	<string>prod-circles-app</string>
+	<key>STORAGE_BUCKET</key>
+	<string>prod-circles-app.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:842757656787:ios:97a148a65c61663b808426</string>
+	<key>DATABASE_URL</key>
+	<string>https://prod-circles-app.firebaseio.com</string>
+</dict>
+</plist>

@@ -1,0 +1,1 @@
+export {ProfessionScreen} from './Profession';

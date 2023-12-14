@@ -1,0 +1,184 @@
+services:
+  db:
+    image: postgres:12.2-alpine
+    restart: unless-stopped
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+
+  redis:
+    image: redis:6.2.4-alpine
+    command: redis-server --requirepass 321654987
+    ports:
+      - 6379:6379
+
+  app:
+    image: golang:1.16.2-alpine3.13
+    restart: unless-stopped
+    volumes:
+      - ../backend-circle-app:/app
+    working_dir: /app
+    ports:
+      - 3001:3001
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://app:3001/v1/health/"]
+      interval: 120s
+      timeout: 20s
+      retries: 3
+    environment:
+      - HOST
+      - POSTGRES_HOST
+      - POSTGRES_PORT
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - MANDRILL
+      - SEGMENT
+      - JWTSECRET
+    command: >
+      sh -c "
+      apk update && apk upgrade && apk add --no-cache git curl &&
+      git config --global url."https://$GHUSERNAME:$GHTOKEN@github.com".insteadOf "https://github.com" &&
+      go run main.go sql.go
+      "
+    links:
+      - db
+    depends_on:
+      - db
+
+  app_messages:
+    image: golang:1.16.2-alpine3.13
+    restart: unless-stopped
+    volumes:
+      - ../backend-messages-circle-app:/app_messages
+    working_dir: /app_messages
+    ports:
+      - 8484:8484
+      - 8485:8485
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://app_messages:8484/v1/health/"]
+      interval: 120s
+      timeout: 20s
+      retries: 3
+    environment:
+      - HOST
+      - POSTGRES_HOST
+      - POSTGRES_PORT
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - FCMKEY
+      - SEGMENT
+      - JWTSECRET
+    command: >
+      sh -c "
+      apk update && apk upgrade && apk add --no-cache git curl &&
+      git config --global url."https://$GHUSERNAME:$GHTOKEN@github.com".insteadOf "https://github.com" &&
+      go run main.go
+      "
+    links:
+      - db
+      - app
+    depends_on:
+      - db
+      - app
+
+  app_notifications:
+    image: golang:1.16.2-alpine3.13
+    restart: unless-stopped
+    volumes:
+      - ../backend-notifications-circles-app:/app_notifications
+    working_dir: /app_notifications
+    ports:
+      - 8111:8111
+      - 811:811
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://app_notifications:8111/v1/health/"]
+      interval: 120s
+      timeout: 20s
+      retries: 3
+    environment:
+      - HOST
+      - POSTGRES_HOST
+      - POSTGRES_PORT
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - MANDRILL
+      - FCMKEY
+      - SEGMENT
+      - JWTSECRET
+    command: >
+      sh -c "
+      apk update && apk upgrade && apk add --no-cache git curl &&
+      git config --global url."https://$GHUSERNAME:$GHTOKEN@github.com".insteadOf "https://github.com" &&
+      go run main.go
+      "
+    links:
+      - app
+    depends_on:
+      - app
+
+  #debug one
+  # app_notifications:
+  #   image: golang:1.16.2-alpine3.13
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ../backend-notifications-circles-app:/app_notifications
+  #   working_dir: /app_notifications
+  #   ports:
+  #     - 8111:8111
+  #     - 811:811
+  #     - 2345:2345
+  #   environment:
+  #     - HOST
+  #     - POSTGRES_HOST
+  #     - POSTGRES_PORT
+  #     - POSTGRES_DB
+  #     - POSTGRES_USER
+  #     - POSTGRES_PASSWORD
+  #     - MANDRILL
+  #     - FCMKEY
+  #     - SEGMENT
+  #     - JWTSECRET
+  #   command: >
+  #     sh -c "
+  #     apk update && apk upgrade && apk add --no-cache dpkg gcc git musl-dev curl &&
+  #     git config --global url."https://$GHUSERNAME:$GHTOKEN@github.com".insteadOf "https://github.com" &&
+  #     go get github.com/go-delve/delve/cmd/dlv &&
+  #     dlv debug --headless --log -l 0.0.0.0:2345 --api-version=2
+  #     "
+  #   links:
+  #     - app
+  #   depends_on:
+  #     - app
+
+  nginx:
+    image: nginx:1.19.0-alpine
+    restart: unless-stopped
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx:/etc/nginx/html
+    ports:
+      - 80:80
+    links:
+      - db
+      - app
+      - app_messages
+      - app_notifications
+    depends_on:
+      - db
+      - app
+      - app_messages
+      - app_notifications
+
+volumes:
+  postgres:
+  nginx:

@@ -1,0 +1,6 @@
+FROM alpine:3.13.1
+# added curl for docker health
+RUN apk update && apk upgrade && apk add --no-cache curl 
+COPY app ./
+EXPOSE 8485 8484
+CMD ["./app"]

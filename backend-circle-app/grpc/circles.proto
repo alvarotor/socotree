@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+option go_package = "github.com/socotree/backend-circle-app/grpc";
+
+package grpc;
+
+service ServicesEventsCircles {
+	rpc ReadEventsCircles(ReadCirclesParams) returns (ResponseEventsCircles) {}
+	rpc ReadEvents(ReadCirclesParams) returns (ResponseEvents) {}
+	rpc ReadEventRegisteredUsers(ReadCirclesParams) returns (ResponseUsers) {}
+}
+
+message ReadCirclesParams {
+	string eventid = 1;
+}
+
+message ResponseEventsCircles {
+	bool success = 1;
+	repeated ResponseEventCircle eventCircles = 2;
+}
+
+message ResponseEventCircle {
+	string eventid = 1;
+	string circleid = 2;
+}
+
+message ResponseEvents {
+	bool success = 1;
+	repeated ResponseEvent events = 2;
+}
+
+message ResponseEvent {
+	string eventid = 1;
+	string name = 2;
+	int32 year = 3;
+	int32 month = 4;
+	int32 day = 5;
+	int32 hour = 6;
+	int32 minute = 7;
+}
+
+message ResponseUsers {
+	bool success = 1;
+	repeated ResponseUser users = 2;
+}
+
+message ResponseUser {
+	string fcmtoken = 1;
+}

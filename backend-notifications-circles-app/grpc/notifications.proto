@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+option go_package = "github.com/socotree/backend-notifications-circles-app/grpc";
+
+package grpc;
+
+service ServicesEmails {
+	rpc EmailForgottenPassword(Email) returns (Response) {}
+	rpc EmailInterestsAdmin(EmailInterest) returns (Response) {}
+	rpc EmailVerifyUserEmail(Email) returns (Response) {}
+	rpc EmailUserNewCircle(Email) returns (Response) {}
+	rpc EmailUserVerified(Email) returns (Response) {}
+	rpc EmailReportProfile(MessageReportProfile) returns (Response) {}
+	rpc EmailAdmin(EmailAdminRequest) returns (Response) {}
+}
+
+service ServicesPushNotifications {
+	rpc PNChatMessage(PNMessageChat) returns (Response) {}
+	rpc PNUserNewCircle(PNMessageNewCircle) returns (Response) {}
+	rpc PNUserVerified(PNMessageChat) returns (Response) {}
+	rpc PNUserRejected(PNMessageUserRejected) returns (Response) {}
+}
+
+message EmailAdminRequest {
+	string subject = 1;
+	string text = 2;
+}
+
+message PNMessageUserRejected {
+	string text = 1;
+	string token = 2;
+}
+
+message PNMessageNewCircle {
+	string eventname = 1;
+	repeated string tokens = 2;
+	string eventid = 3;
+	string typepn = 4;
+}
+
+message PNMessageChat {
+	string title = 1;
+	string body = 2;
+	repeated string tokens = 3;
+	string userid = 4;
+	string circleid = 5;
+	string typepn = 6;
+}
+
+message Email {
+	string email = 1;
+	string name = 2;
+	int32 code = 3;
+}
+
+message EmailInterest {
+	string name = 1;
+}
+
+message Response {
+	bool success = 1;
+}
+
+message MessageReportProfile {
+	string NameReporter = 1;
+	string IDReporter = 2;
+	string NameReported = 3;
+	string IDReported = 4;
+}

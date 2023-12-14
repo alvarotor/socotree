@@ -1,0 +1,6 @@
+FROM alpine:3.13.1
+# needed for the timezones on the UTC calculations and curl for docker health
+RUN apk update && apk upgrade && apk add --no-cache tzdata curl
+COPY app ./
+EXPOSE 3001
+CMD ["./app"]

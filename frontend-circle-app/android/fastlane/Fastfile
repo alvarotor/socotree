@@ -1,0 +1,98 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:android)
+
+fastlane_require "dotenv"
+
+before_all do 
+  Dotenv.load ".env.secret"
+end
+
+
+platform :android do
+  desc "Runs all the tests"
+  lane :test do
+    gradle(task: "test")
+  end
+
+
+desc "Runs all the tests"
+lane :tests do
+increment_version_code
+gradle(task: "tests")
+end
+
+
+
+  desc "Build"
+  lane :build do
+    gradle(task: "clean assembleRelease")
+  end
+
+
+
+  desc "Submit a new Beta Build to Play Store"
+  lane :beta do
+    gradle(task: 'clean')
+    gradle(
+      task: 'assemble',
+      build_type: 'Release',
+      print_command: false,
+    )
+    upload_to_play_store(
+      track: 'internal'
+    )
+  end
+
+
+  desc "Build debug and test APK for screenshots"
+  lane :build_for_screengrab do
+    gradle(
+      task: 'clean'
+    )
+    build_android_app(
+      task: 'assemble',
+      build_type: 'Debug'
+    )
+    build_android_app(
+      task: 'assemble',
+      build_type: 'AndroidTest'
+    )
+  end
+
+
+
+ desc "Deploy a new version to the Google Play"
+  lane :deploy do
+      gradle(task: "assembleRelease")
+      supply
+  end 
+
+  error do |lane, exception|
+  slack(
+    message: exception.message,
+    success: false)
+end
+
+
+
+desc "Release"
+lane :release do
+  deliver( submission_information: JSON.parse(File.read("./metadata/submission_info.json"))) # deliver
+end
+
+
+end

@@ -1,0 +1,1 @@
+export {FadedWrapper} from './faded';

@@ -1,0 +1,5 @@
+FROM alpine:3.12.0
+COPY ./build/backend-notifications /backend-notifications
+COPY ./build/mail_templates /mail_templates
+ENTRYPOINT ./backend-notifications
+EXPOSE 8111 811

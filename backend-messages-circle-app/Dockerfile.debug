@@ -1,0 +1,9 @@
+FROM golang:1.15.7-alpine3.13
+RUN apk update && apk upgrade && \
+    apk add --no-cache dpkg gcc git musl-dev && \
+    go get github.com/go-delve/delve/cmd/dlv
+WORKDIR /app
+COPY . .
+EXPOSE 3001 2345
+RUN chmod +x /dlv.sh 
+ENTRYPOINT [ "/dlv.sh"]

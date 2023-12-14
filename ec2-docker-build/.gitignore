@@ -1,0 +1,13 @@
+.env
+.env.local
+.envPROD
+.envSTAG
+backend-t3alarge.pem
+backend.pem
+pgbackups
+/backend/
+.DS_Store
+backend.zip
+/backup/files/
+/backup/*.zip
+/db/dbs/postgres_circles-*

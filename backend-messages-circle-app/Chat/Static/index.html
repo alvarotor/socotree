@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Chat</title>
+    <script type="text/javascript">
+      window.onload = function () {
+        var conn;
+        var msg = document.getElementById("msg");
+        var sender = document.getElementById("sender");
+        sender.value += "_" + makeid(5);
+
+        function appendLog(str) {
+          var log = document.getElementById("log");
+          var item = document.createElement("div");
+          item.innerHTML = str;
+          var doScroll =
+            log.scrollTop > log.scrollHeight - log.clientHeight - 1;
+          log.appendChild(item);
+          if (doScroll) {
+            log.scrollTop = log.scrollHeight - log.clientHeight;
+          }
+        }
+
+        document.getElementById("form").onsubmit = function () {
+          if (!conn) {
+            return false;
+          }
+          if (!msg.value) {
+            return false;
+          }
+          const json = JSON.stringify({
+            sender: sender.value,
+            message: msg.value,
+          });
+          if (conn.readyState === 3) {
+            //if its disconnected
+            appendLog("<b>Not connected... connect please...</b>");
+          } else {
+            conn.send(json);
+            msg.value = "";
+          }
+          return false;
+        };
+
+        appendLog("<a href='localhost/messages' target='_blank'>double me</a>");
+        appendLog("<b>Trying to connect...</b>");
+
+        function connect() {
+          if (window["WebSocket"]) {
+            let room = "";
+            if (document.getElementById("roomCustom").value) {
+              room = document.getElementById("roomCustom").value;
+            } else {
+              room = document.getElementById("rooms").value;
+            }
+            conn = new WebSocket(
+              "ws://localhost/messages/v1/chat/" +
+                room +
+                "?userid=" +
+                sender.value
+            );
+            conn.onclose = function (evt) {
+              document.getElementById("connect").disabled = false;
+              document.getElementById("close").disabled = true;
+              appendLog("<b>Connection closed.</b>");
+            };
+            conn.onmessage = function (evt) {
+              const json = JSON.parse(evt.data);
+              console.log(json);
+              document.getElementById("clientslabel").innerHTML = json.chatters;
+              var messages = json.message.split("\n");
+              for (var i = 0; i < messages.length; i++) {
+                appendLog(messages[i]);
+              }
+            };
+            conn.onerror = function (evt) {
+              console.log("ERROR: " + JSON.stringify(evt));
+            };
+            document.getElementById("connect").disabled = true;
+            document.getElementById("close").disabled = false;
+            appendLog(`<b>Connected to ${room}</b>`);
+          } else {
+            appendLog("<b>Your browser does not support WebSockets.</b>");
+          }
+        }
+
+        document.getElementById("close").onclick = function () {
+          closePetition();
+        };
+
+        document.getElementById("connect").onclick = function () {
+          appendLog("<b>Sending connect petition...</b>");
+          connect();
+        };
+
+        function closePetition() {
+          appendLog("<b>Sending close petition...</b>");
+          conn.close();
+        }
+
+        document.getElementById("rooms").onchange = function () {
+          if (conn) closePetition();
+        };
+
+        connect();
+
+        function makeid(length) {
+          var result = "";
+          var characters =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+          var charactersLength = characters.length;
+          for (var i = 0; i < length; i++) {
+            result += characters.charAt(
+              Math.floor(Math.random() * charactersLength)
+            );
+          }
+          return result;
+        }
+
+        document.getElementById("createRoom").onclick = async function () {
+          const room = document.getElementById("roomCustom").value;
+          if (room) {
+            const f = await fetch(
+              "http://localhost/messages/v1/addchatgroup/" + room
+            );
+            const r = await f.json();
+
+            if (r.success) {
+              const select = document.getElementById("rooms");
+              var opt = document.createElement("option");
+              opt.value = room;
+              opt.innerHTML = room;
+              select.appendChild(opt);
+            }
+          }
+        };
+      };
+    </script>
+    <style type="text/css">
+      html {
+        overflow: hidden;
+      }
+
+      body {
+        overflow: hidden;
+        padding: 0;
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        background: gray;
+      }
+
+      #log {
+        background: white;
+        margin: 0;
+        padding: 0.5em 0.5em 0.5em 0.5em;
+        position: absolute;
+        top: 0.5em;
+        left: 0.5em;
+        right: 0.5em;
+        bottom: 3em;
+        overflow: auto;
+      }
+
+      #form {
+        padding: 0 0.5em 0 0.5em;
+        margin: 0;
+        position: absolute;
+        bottom: 1em;
+        left: 0px;
+        width: 100%;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="log"></div>
+    <form id="form">
+      <input type="text" id="roomCustom" value="" />
+      <button type="button" id="createRoom">Create Room</button>
+      <select id="rooms">
+        <option value="go">go</option>
+        <option value="arduino">arduino</option>
+        <option value="scala">scala</option>
+        <option value="java">java</option>
+      </select>
+      <button type="button" id="connect">Connect</button>
+      <input type="text" id="sender" value="username" />
+      <input type="text" id="msg" size="64" autofocus value="1234567890" />
+      <input type="submit" value="Send" />
+      <button type="button" id="close">Close</button>
+      <label type="button" id="clientslabel">0</label>
+    </form>
+  </body>
+</html>

@@ -1,0 +1,1 @@
+export {EventsRemindedScreen} from './EventsReminded';

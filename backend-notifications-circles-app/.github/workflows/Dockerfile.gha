@@ -1,0 +1,7 @@
+FROM alpine:3.13.1
+# added curl for docker health
+RUN apk update && apk upgrade && apk add --no-cache curl 
+COPY app ./
+COPY mail_templates/ ./mail_templates
+EXPOSE 8111 811
+CMD ["./app"]

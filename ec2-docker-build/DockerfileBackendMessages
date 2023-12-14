@@ -1,0 +1,4 @@
+FROM alpine:3.12.0
+COPY ./build/backend-messages /backend-messages
+ENTRYPOINT ./backend-messages
+EXPOSE 8484 8585

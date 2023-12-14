@@ -1,0 +1,1 @@
+export {OnboardingOneScreen} from './OnboardingOne';

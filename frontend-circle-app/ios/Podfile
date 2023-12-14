@@ -1,0 +1,26 @@
+require_relative '../node_modules/react-native/scripts/react_native_pods'
+require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
+
+platform :ios, '11.0'
+
+project 'Circles', {
+  'DebugDev' => :debug,
+  'DebugStaging' => :debug,
+  'DebugProd' => :debug,
+  'ReleaseDev' => :release,
+  'ReleaseStaging' => :release,
+  'ReleaseProd' => :release,
+}
+
+target 'Circles' do
+  config = use_native_modules!
+
+  use_react_native!(:path => config["reactNativePath"])
+ permissions_path = '../node_modules/react-native-permissions/ios'
+ pod 'Permission-PhotoLibrary', :path => "#{permissions_path}/PhotoLibrary.podspec"
+ pod 'react-native-twilio-video-webrtc', path: '../node_modules/react-native-twilio-video-webrtc'
+  target 'CirclesTests' do
+    inherit! :complete
+    # Pods for testing
+  end
+end

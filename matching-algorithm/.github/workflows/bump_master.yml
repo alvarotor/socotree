@@ -1,0 +1,88 @@
+name: Bump version (master - prod)
+on:
+  push:
+    branches:
+      - masterito
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: "0"
+      - name: Bump version and push tag
+        id: bump_tag
+        uses: anothrNick/github-tag-action@1.34.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
+          DEFAULT_BUMP: patch
+          RELEASE_BRANCHES: master
+      - name: Installing Golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.16.2"
+      - uses: actions/github-script@v3
+        id: get-company
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: return context.payload.repository.organization
+          result-encoding: string
+      - uses: actions/github-script@v3
+        id: get-project-twice
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: return context.payload.repository.name + "/" + context.payload.repository.name
+          result-encoding: string
+      - name: Create go src folder
+        run: |
+          mkdir -p /home/runner/go/src/github.com/${{ github.repository }}
+          cp -R /home/runner/work/${{steps.get-project-twice.outputs.result}} /home/runner/go/src/github.com/${{steps.get-company.outputs.result}}
+      - name: Download dependencies
+        working-directory: /home/runner/go/src/github.com/${{ github.repository }}
+        run: export GOSUMDB=off && go mod download
+      - name: Compile app
+        working-directory: /home/runner/go/src/github.com/${{ github.repository }}
+        run: CGO_ENABLED=0 GOOS=linux go build -ldflags="-X github.com/${{ github.repository }}/GraphQL.version=${{ steps.bump_tag.outputs.new_tag }}" -o /home/runner/work/${{steps.get-project-twice.outputs.result}}/app .
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+      - name: Login to Docker Github Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GIT_HUB_REGISTRY_PAT }}
+      - name: Build and push to registry
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./.github/workflows/Dockerfile.gha
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ steps.bump_tag.outputs.new_tag }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          build-args: |
+            newtag=${{ steps.bump_tag.outputs.new_tag }}
+      # - name: Image digest
+      #   run: echo ${{ steps.docker_build.outputs.digest }}
+      # - name: Install SSH key
+      #   uses: shimataro/ssh-key-action@v2
+      #   with:
+      #     key: ${{ secrets.SSH_PROD }}
+      #     name: id_rsa
+      #     known_hosts: ${{ secrets.SSH_HOSTS_PROD }} # cat ~/.ssh/known_hosts
+      # - name: SH
+      #   run: ./.github/workflows/deploy_me_prod.sh

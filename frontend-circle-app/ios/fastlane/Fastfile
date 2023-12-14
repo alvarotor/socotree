@@ -1,0 +1,84 @@
+default_platform(:ios)
+
+fastlane_require "dotenv"
+
+before_all do 
+  Dotenv.load ".env.secret"
+end
+
+desc "Create on Developer Portal and App Store Connect"
+lane :create_app do
+  create_app_online # produce
+end 
+
+platform :ios do
+
+before_all do
+Dotenv.load ".env.ios"
+end
+
+ desc "Generate push"
+  lane :gen_push_certy do
+    get_push_certificate
+  end
+
+
+
+  desc "Sync signing"
+  lane :signing do
+    sync_code_signing #match
+
+    mapping = Actions.lane_context[
+      SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING
+    ]
+    update_code_signing_settings(
+      profile_name: mapping[ENV['MATCH_APP_IDENTIFIER']]
+    )
+  end
+
+
+
+  desc "Build binary"
+  lane :build do
+    signing
+    increment_build_number
+    build_ios_app
+  end
+
+
+
+  desc "Release"
+  lane :release do
+    build
+    deliver( submission_information: JSON.parse(File.read("./metadata/submission_info.json"))) # deliver
+  end
+
+
+
+  desc "Submit to beta"
+  lane :submit_beta do
+    build
+    upload_to_testflight(
+    ipa: ENV['PILOT_IPA'],
+    beta_app_review_info:  JSON.parse(File.read(ENV['PILOT_BETA_APP_REVIEW_INFO'])),
+    distribute_external: ENV['PILOT_DISTRIBUTE_EXTERNAL'],
+    groups: ENV['PILOT_GROUPS'],
+)
+  end
+
+
+
+  desc "Testflight"
+  lane :submit_testflight do
+    build
+    upload_to_testflight(
+      beta_app_feedback_email: ENV['PILOT_BETA_APP_FEEDBACK'],
+      beta_app_description: ENV['PILOT_BETA_APP_DESCRIPTION'],
+      demo_account_required: ENV['DEMO_ACCOUNT_REQUIRED'],
+      notify_external_testers: ENV['PILOT_NOTIFY_EXTERNAL_TESTERS'],
+      changelog: ENV['PILOT_CHANGELOG'])
+  end
+
+
+
+end

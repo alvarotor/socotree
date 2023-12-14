@@ -1,0 +1,5 @@
+FROM alpine:3.12.0
+RUN apk update && apk upgrade && apk add --no-cache tzdata
+COPY ./build/backend /backend
+ENTRYPOINT ./backend
+EXPOSE 3001
